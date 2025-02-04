@@ -1,0 +1,19 @@
+% Viterbi Algorithm Simulation in a Noisy Channel clc; clear; close all; 
+%% Parameters 
+N = 1000;                 % Number of bits 
+SNR_dB = 0:2:10;          % Signal-to-noise ratio in dB constraint_length = 3;    % Constraint length gen_poly = [7 5];         % Generator polynomials (in octal) 
+%% Convolutional Encoder 
+trellis = poly2trellis(constraint_length, gen_poly); % Trellis structure data = randi([0 1], 1, N); % Random binary data encoded_data = convenc(data, trellis); % Convolutional encoding 
+%% Simulate Noise and Decoding 
+BER_uncoded = zeros(1, length(SNR_dB)); % BER for uncoded data BER_coded = zeros(1, length(SNR_dB));   % BER for coded data for i = 1:length(SNR_dB) 
+    % Add noise to encoded signal 
+    SNR_linear = 10^(SNR_dB(i)/10); % Convert dB to linear scale     noise_var = 1 / (2 * SNR_linear); % Noise variance     noisy_signal = encoded_data + sqrt(noise_var) * randn(size(encoded_data));  
+    % AWGN 
+    % Hard decision decoding (0 or 1)     received_bits = noisy_signal > 0.5; 
+    % Viterbi decoding     decoded_data = vitdec(received_bits, trellis, 5 * constraint_length, 'trunc', 'hard');     % Uncoded BER (just comparing received noisy signal with original data)     uncoded_bits = noisy_signal(1:N) > 0.5; 
+    BER_uncoded(i) = sum(uncoded_bits ~= data) / N; 
+    % Coded BER (comparing decoded data with original data)     BER_coded(i) = sum(decoded_data ~= data) / N; end 
+%% Plot Results 
+figure; semilogy(SNR_dB, BER_uncoded, '-o', 'LineWidth', 1.5); hold on; semilogy(SNR_dB, BER_coded, '-s', 'LineWidth', 1.5); grid on; 
+xlabel('SNR (dB)'); ylabel('Bit Error Rate (BER)'); legend('Uncoded BER', 'Coded BER'); 
+title('BER Performance of Viterbi Decoding');                 
